@@ -14,7 +14,7 @@ def stream_users_in_batches(batch_size):
         connection.close()
 
         if not rows:
-            break
+            return
 
         yield rows
         offset += batch_size
