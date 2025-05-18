@@ -1,6 +1,8 @@
+#!/usr/bin/python3
+
 import mysql.connector
 import csv
-import uuid
+import os
 
 # 1. Connect to MySQL server (default connection, no specific DB)
 def connect_db():
@@ -8,7 +10,7 @@ def connect_db():
         connection = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='your_password'  # Replace with your actual password
+            password=os.getenv("PASS")  # Replace with your actual password
         )
         return connection
     except mysql.connector.Error as err:
