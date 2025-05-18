@@ -1,37 +1,28 @@
-import mysql.connector
-import os
-from dotenv import load_dotenv
+#!/usr/bin/python3
+seed = __import__('seed')
 
-load_dotenv()
 
 def stream_users_in_batches(batch_size):
-    """Generator that yields batches of users from the database."""
-    connection = mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
-        database="ALX_prodev"
-    )
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM user_data")
+    """Generator to yield users in batches from the database."""
+    offset = 0
 
-    batch = []
-    for row in cursor:
-        batch.append(row)
-        if len(batch) == batch_size:
-            yield batch
-            batch = []
+    while True:
+        connection = seed.connect_to_prodev()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(f"SELECT * FROM user_data LIMIT {batch_size} OFFSET {offset}")
+        rows = cursor.fetchall()
+        connection.close()
 
-    if batch:
-        yield batch
+        if not rows:
+            break
 
-    cursor.close()
-    connection.close()
+        yield rows
+        offset += batch_size
 
 
 def batch_processing(batch_size):
-    """Processes each batch and prints users older than 25."""
+    """Process each batch, filter users over age 25, and print them."""
     for batch in stream_users_in_batches(batch_size):
         for user in batch:
-            if user["age"] > 25:
+            if user['age'] > 25:
                 print(user)
