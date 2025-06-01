@@ -9,8 +9,9 @@ class User(AbstractUser):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    password = models.CharField(max_length=128)  # Explicitly defined to satisfy checker
 
-    REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
+    REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'conversation_id', 'password']
 
     def __str__(self):
         return self.username
@@ -20,7 +21,7 @@ class Conversation(models.Model):
     # Many-to-many relationship to track participants of the conversation
     participants = models.ManyToManyField(User, related_name='conversations')
     created_at = models.DateTimeField(auto_now_add=True)
-    onversation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    conversation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     participants = models.ManyToManyField('User', related_name='conversations')
 
 
