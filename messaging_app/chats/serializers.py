@@ -9,17 +9,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)  # Nested sender info
-
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'content', 'timestamp']
-
+        fields = ['message_id', 'sender', 'message_body', 'sent_at']
 
 class ConversationSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)  # Nested users in conversation
-    messages = MessageSerializer(many=True, read_only=True)  # Nested messages in conversation
+    messages = MessageSerializer(many=True, read_only=True)
+    participants = serializers.StringRelatedField(many=True)
 
     class Meta:
         model = Conversation
-        fields = ['id', 'participants', 'created_at', 'messages']
+        fields = ['conversation_id', 'participants', 'messages']
