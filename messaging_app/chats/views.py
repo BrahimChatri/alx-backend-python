@@ -8,6 +8,8 @@ from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation
 from .filters import MessageFilter
 from .pagination import StandardResultsSetPagination
+from rest_framework.status import HTTP_403_FORBIDDEN
+
 
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
@@ -15,6 +17,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return Response({"detail": "Forbidden"}, status=HTTP_403_FORBIDDEN)
         conversation = Conversation.objects.create()
         conversation.participants.set(request.data.get('participants', []))
         serializer = self.get_serializer(conversation)
