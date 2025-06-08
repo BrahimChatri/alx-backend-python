@@ -1,8 +1,11 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+#!/usr/bin/env python3 
 
-class IsParticipantOfConversation(BasePermission):
+from rest_framework import permissions
+from rest_framework.permissions import SAFE_METHODS
+
+class IsParticipantOfConversation(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        return request.user in obj.participants.all()
-
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated
+        user = request.user
+        if request.method in SAFE_METHODS + ("PUT", "PATCH", "DELETE"):
+            return user in obj.conversation.participants.all()
+        return False
