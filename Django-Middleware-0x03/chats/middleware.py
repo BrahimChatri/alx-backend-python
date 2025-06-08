@@ -14,6 +14,18 @@ logger.setLevel(logging.INFO)
 
 message_tracker = {}
 
+class RolepermissionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = request.user
+        if request.path.startswith('/admin/') or request.path.startswith('/moderator-only/'):
+            if not user.is_authenticated or user.role not in ['admin', 'moderator']:
+                return HttpResponseForbidden("403 Forbidden: You don't have permission to access this resource.")
+        return self.get_response(request)
+
+
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
