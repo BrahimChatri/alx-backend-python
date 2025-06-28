@@ -1,0 +1,47 @@
+#!/bin/bash
+
+
+DEPLOYMENT_NAME="django-messaging-app"
+NAMESPACE="default"
+REPLICAS=3
+SERVICE_NAME="django-messaging-service"
+SERVICE_PORT=8000
+
+# Scale deployment
+echo "Scaling deployment $DEPLOYMENT_NAME to $REPLICAS replicas..."
+kubectl scale deployment $DEPLOYMENT_NAME --replicas=$REPLICAS
+
+# Wait a bit for scaling to happen
+echo "Waiting for pods to be ready..."
+sleep 10
+
+# Verify pods
+echo "Listing pods:"
+kubectl get pods -l app=django-messaging
+
+# Get service ClusterIP to target wrk test
+SERVICE_IP=$(kubectl get svc $SERVICE_NAME -o jsonpath='{.spec.clusterIP}')
+
+if [ -z "$SERVICE_IP" ]; then
+  echo "Failed to get Service IP. Is the service running?"
+  exit 1
+fi
+
+echo "Service IP: $SERVICE_IP"
+
+# Check if wrk is installed
+if ! command -v wrk &> /dev/null
+then
+    echo "wrk is not installed. Please install wrk to run load test."
+    exit 1
+fi
+
+echo "Running wrk load test against http://$SERVICE_IP:$SERVICE_PORT ..."
+
+wrk -t2 -c10 -d10s http://$SERVICE_IP:$SERVICE_PORT/
+
+# Monitor resource usage
+echo "Showing current resource usage:"
+kubectl top pods
+
+echo "Script completed."

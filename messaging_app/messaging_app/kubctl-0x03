@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# File: messaging_app/kubctl-0x03
+
+DEPLOYMENT_FILE="messaging_app/blue_deployment.yaml"
+DEPLOYMENT_NAME="django-messaging-blue"
+NAMESPACE="default"
+SERVICE_NAME="django-messaging-service"
+SERVICE_PORT=8000
+
+echo "Applying updated deployment to trigger rolling update..."
+kubectl apply -f $DEPLOYMENT_FILE
+
+echo "Waiting for rollout to complete..."
+kubectl rollout status deployment/$DEPLOYMENT_NAME
+
+# Get service ClusterIP to test app availability
+SERVICE_IP=$(kubectl get svc $SERVICE_NAME -o jsonpath='{.spec.clusterIP}')
+
+if [ -z "$SERVICE_IP" ]; then
+  echo "Failed to get Service IP. Is the service running?"
+  exit 1
+fi
+
+echo "Testing app availability with curl for 15 seconds..."
+
+END=$((SECONDS+15))
+while [ $SECONDS -lt $END ]; do
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$SERVICE_IP:$SERVICE_PORT/)
+  if [ "$HTTP_CODE" == "200" ]; then
+    echo "$(date): App is up. HTTP 200 OK."
+  else
+    echo "$(date): Warning! App returned HTTP code $HTTP_CODE"
+  fi
+  sleep 1
+done
+
+echo "Rolling update verification completed."
+
+echo "Current pods status:"
+kubectl get pods -l app=django-messaging,version=blue
+
+echo "Script finished."
